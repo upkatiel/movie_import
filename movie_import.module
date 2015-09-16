@@ -7,10 +7,9 @@ ini_set('display_errors', 1);
 /**
  * Implements hook_menu().
  */
-function movie_import_menu()
-{
+function movie_import_menu() {
     $items['import-movie'] = array(
-        'title' => t('Import Movie'),
+        'title' => 'Import Movie',
         'page callback' => 'drupal_get_form',
         'access arguments' => array('access content'),
         'type' => MENU_CALLBACK,
@@ -35,10 +34,52 @@ function movie_import_form() {
     return $form;
 }
 function movie_import_form_validate($form, &$form_state) {
-    // Validation logic.
+    // Get our title from the form input
+    $movie_title = $form_state['values']['title'];
+    // If movie has been imported show error.
+    if (movie_import_check_movie_exists($movie_title)) :
+        form_set_error('movie_title' , 'This film has been inported');
+        return TRUE;
+    else :
+        // If movie hasn't been imported clear error next validation.
+        form_clear_error();
+    endif;
+
+    if (movie_import_check_movie_valid($movie_title)) :
+        form_clear_error();
+        return TRUE;
+    else :
+        form_set_error('movie_title' , 'This is not a film.');
+    endif;
 }
 function movie_import_form_submit($form, &$form_state) {
     // Submission logic.
-    dsm('I have been submitted');
-    dsm($form_state);
+    $movie_title = $form_state['values']['title'];
+dsm(movie_import_check_movie_valid($movie_title));
+}
+function movie_import_check_movie_exists($movie_title) {
+    // Check if movie exists
+    $result = db_select('node' , 'n')->fields('n')->condition('title' , $movie_title , '=')->execute()->fetchAssoc();
+    if (!empty($result['nid'])) :
+        return TRUE;
+    else :
+        return FALSE;
+    endif;
+}
+
+function movie_import_check_movie_valid($movie_title) {
+    // Get response from API
+    $movie_api_request = drupal_http_request( 'http://www.omdbapi.com/?t=' .urlencode( $movie_title ). '&y=&plot=full&r=json' );
+    if($movie_api_request->code == 200 ) :
+    // Decode our response
+    $data = drupal_json_decode($movie_api_request->data);
+      // If this is a movie return true;
+        if ($data['Response']) :
+            return $data;
+        else  :
+            return FALSE;
+        endif;
+    endif;
+    return FALSE;
+
 }
