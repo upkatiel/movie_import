@@ -1,0 +1,4 @@
+name = Movie Import
+description = This is a module to import movies from IMDB
+core = 7.x
+package = 'Movie Import'

@@ -1,0 +1,44 @@
+<?php
+ini_set('display_errors', 1);
+/**
+ * @file
+ * movie_import.module
+ */
+/**
+ * Implements hook_menu().
+ */
+function movie_import_menu()
+{
+    $items['import-movie'] = array(
+        'title' => t('Import Movie'),
+        'page callback' => 'drupal_get_form',
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+        'page arguments' => array('movie_import_form')
+    );
+    return $items;
+}
+
+function movie_import_form() {
+        $form = array();
+            $form['title'] = array(
+                '#type' => 'textfield',
+                '#title' => t('Movie Title'),
+                '#size' => 60,
+                '#maxlength' => 128,
+                '#required' => TRUE,
+            );
+            $form['submit'] = array(
+              '#type' => 'submit',
+              '#value' => t('Submit')
+            );
+    return $form;
+}
+function movie_import_form_validate($form, &$form_state) {
+    // Validation logic.
+}
+function movie_import_form_submit($form, &$form_state) {
+    // Submission logic.
+    dsm('I have been submitted');
+    dsm($form_state);
+}
