@@ -37,19 +37,26 @@ function movie_import_form_validate($form, &$form_state) {
     // Get our title from the form input
     $movie_title = $form_state['values']['title'];
     // If movie has been imported show error.
+    $details = movie_import_check_movie_valid($movie_title);
     if (movie_import_check_movie_exists($movie_title)) :
         form_set_error('movie_title' , 'This film has been inported');
     endif;
 
-    if (empty(movie_import_check_movie_valid($movie_title))) :
+    if (empty($details)) :
         form_set_error('movie_title' , 'This is not a film.');
+    else :
+        $form_state['values']['movie_details'] = $details;
     endif;
+
+
 
 }
 function movie_import_form_submit($form, &$form_state) {
     // Submission logic.
-    $movie_title = $form_state['values']['title'];
-    dsm(movie_import_check_movie_valid($movie_title));
+    $movie = $form_state['values']['movie_details'];
+    movie_import_save_movie($movie);
+
+
 }
 function movie_import_check_movie_exists($movie_title) {
     // Check if movie exists
@@ -75,4 +82,96 @@ function movie_import_check_movie_valid($movie_title) {
         endif;
     endif;
     return FALSE;
+}
+
+function movie_import_save_movie($movie) {
+    //  dsm($movie);
+    global $user;
+    $poster = movie_import_poster_image($movie['Poster'] ,  $movie['Title'] , $user->uid);
+
+    dsm($poster);
+
+
+
+    $release_date = date("Y-m-d", strtotime($movie['Released']));
+    $node = new stdClass();
+    $node->title = $movie['Title'];
+
+    $node->type = "movie_review";
+    $node->body['und'][0]['value'] = $movie['Plot'];
+    $node->field_movie_review_netflix_link['und'][0] = array(
+        'url' => 'http://www.imdb.com/title/'.$movie['imdbID'],
+        'attributes' => array('target' => 'default')
+    );
+    $node->field_movie_review_cinemas_link['und'][0] = array(
+        'url' => 'https://www.google.co.uk/movies?q='.urlencode($movie['Title']),
+        'attributes' => array('target' => 'default')
+    );
+    $node->field_movie_review_buy__link['und'][0] = array(
+        'url' => 'http://www.amazon.co.uk/s/ref=sr_nr_n_4?fst=as%3Aoff&rh=n%3A283926%2Ck%3Ai+am+legend&keywords='.urlencode($movie['Title']).'&ie=UTF8&qid=1442415156&rnid=1642204031',
+        'attributes' => array('target' => 'default')
+    );
+    $node->field_movie_review_trailers_link['und'][0] = array(
+        'url' => 'https://www.youtube.com/results?search_query='.urlencode($movie['Title']),
+        'attributes' => array('target' => 'default')
+    );
+    $node->field_movie_review_release_date['und'][0]['value'] = $release_date;
+    $node->field_movie_review_main_image['und'][0] = (array) $poster;
+
+    node_object_prepare($node); // Sets some defaults. Invokes hook_prepare() and hook_node_prepare().
+    $node->language = LANGUAGE_NONE; // Or e.g. 'en' if locale is enabled
+    $node->uid = $user->uid;
+    $node->status = 1; //(1 or 0): published or not
+    $node->promote = 0; //(1 or 0): promoted to front page
+    $node->comment = 0; // 0 = comments disabled, 1 = read only, 2 = read/write
+
+    // Term reference (taxonomy) field
+    $terms = explode(', ' , $movie['Genre']);
+    foreach ($terms as $key => $term) {
+        $term_id = taxonomy_get_term_by_name($term);
+        if (empty($term_id)) :
+            //$newterm = new stdClass();
+            //$newterm->name = $term;
+            //taxonomy_term_save(($newterm));
+        endif;
+        //  $node->field_product_tid[$node->language][]['tid'] = $form_state['values']['a taxonomy term id'];
+    }
+    dsm($node);
+  $node = node_submit($node); // Prepare node for saving
+   node_save($node);
+  drupal_set_message( "Node with nid " . $node->nid . " saved!\n");
+//    dsm($node);
+}
+function movie_import_poster_image($poster , $title , $user_id) {
+    // My Poster Image
+    $get_poster = drupal_http_request($poster);
+    $safe_filename = movie_import_san_file($title);
+    $filename = $safe_filename . substr($poster , strrpos($poster , '.'), strlen($poster));
+    if ($get_poster->code == 200) :
+
+        dsm(file_directory_temp() . '/' . $filename);
+       file_unmanaged_save_data($get_poster->data , file_directory_temp() . '/' . $filename);
+
+        $file = (object) array(
+            'uid' => $user_id,
+            'uri' => file_directory_temp() . '/' . $filename,
+            'filemime' => file_get_mimetype(file_directory_temp() . '/' . $filename),
+            'status' => 1
+        );
+
+
+    $file = file_copy($file , 'public://movie_images');
+        dsm($file);
+    return $file;
+    endif;
+}
+function movie_import_san_file($file){
+    $file = preg_replace("([^\w\s\d\-_~,;:\[\]\(\).])", '', $file);
+// Remove any runs of periods (thanks falstro!)
+    $file = preg_replace("([\.]{2,})", '', $file);
+
+    $file = str_replace(' ' , '_' , $file);
+    $file = str_replace(':' , '' , $file);
+
+    return $file;
 }
