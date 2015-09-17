@@ -5,6 +5,8 @@ To bulk add - drush mi-b
 
 To bulk delete - drush mi-d
 
-To change the default API url please go to the admin menu. %movie_title should be added to work
-
 Uses content type movie_review and Vocabulary of Genre
+
+** IMPORTANT **
+
+To change the default API url please go to the admin menu. %movie_title needs be added to work
