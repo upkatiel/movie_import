@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * @file
+ * movie_import.install
+ */
 /*
  * Create a hook_install()
  */
@@ -257,5 +260,4 @@ function movie_import_install() {
         "Three Colours: Red"
     );
     variable_set('movie_import_list' , $films);
-    drupal_set_message('Created Default list of items');
 }

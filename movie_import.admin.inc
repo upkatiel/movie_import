@@ -1,9 +1,9 @@
 <?php
-
-/*
- * @file a file to add settings in the admin area
+/**
+ * @file
+ * movie_import.admin.inc
  */
-
+// a function to create a admin settings page
 function movie_import_admin_form() {
     $form = array();
 

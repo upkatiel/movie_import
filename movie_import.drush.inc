@@ -1,7 +1,8 @@
 <?php
-/*
-* @file This is a drush command to inport and delete bulk movies.
-*/
+/**
+ * @file
+ * movie_import.drush.inc
+ */
 
 /*
  * Implements drush_command hook
@@ -34,7 +35,7 @@ function movie_import_drush_command() {
  * Bulk import function
  */
 function movie_import_bulk_import_movies() {
-    drupal_set_message('importing Movies');
+    drupal_set_message(t('importing Movies'));
     $movie_titles = variable_get('movie_import_list');
     foreach ($movie_titles as $title) {
        $movie = movie_import_check_movie_valid($title);
@@ -48,7 +49,7 @@ function movie_import_bulk_import_movies() {
  * Bulk delete function
  */
 function movie_import_bulk_delete_movies() {
-    drupal_set_message('deleting movies reviews');
+    drupal_set_message(t('deleting movies reviews'));
 
     // Get all nodes by the content type of reviews
     $nodes = db_select("node", 'n')
@@ -62,5 +63,5 @@ function movie_import_bulk_delete_movies() {
         node_delete_multiple($nodes);
     endif;
 
-    drupal_set_message( 'Success! All movie reviews have been deleted.' );
+    drupal_set_message( t('Success! All movie reviews have been deleted.') );
 }
