@@ -14,6 +14,17 @@ function movie_import_menu() {
         'type' => MENU_CALLBACK,
         'page arguments' => array('movie_import_form')
     );
+    // Need at least one child item before your section will appear.
+    $items['admin/config/content/movie-import'] = array(
+        'title' => 'API Settings',
+        'page callback' => 'drupal_get_form',
+        'access arguments' => array('administer site configuration'),
+        'file' => 'movie_import.admin.inc',
+        'file path' => drupal_get_path('module', 'movie_import'),
+        'type' => MENU_NORMAL_ITEM,
+        'page arguments' => array('movie_import_admin_form')
+
+    );
     return $items;
 }
 /**
@@ -81,8 +92,10 @@ function movie_import_check_movie_exists($movie_title) {
  * Check movie exsits
  */
 function movie_import_check_movie_valid($movie_title) {
+    // Get API Settings
+    $api_key = variable_get('movie_import_api_url');
     // Get response from API
-    $movie_api_request = drupal_http_request('http://www.omdbapi.com/?t=' . urlencode($movie_title) . '&y=&plot=full&r=json');
+    $movie_api_request = drupal_http_request(str_replace('%movie_name' , urlencode($movie_title) , $api_key));
     if ($movie_api_request->code == 200):
     // Decode our response
     $data = drupal_json_decode($movie_api_request->data);
@@ -105,7 +118,6 @@ function movie_import_check_movie_valid($movie_title) {
  */
 
 function movie_import_save_movie($movie) {
-
     global $user;
     // Get Poster for this movie
     $poster = movie_import_poster_image($movie['Poster'] ,  $movie['Title'] , $user->uid);
@@ -234,3 +246,4 @@ function movie_import_san_file($file) {
     $file = str_replace('-' , '_' , $file);
     return $file;
 }
+
