@@ -10,7 +10,7 @@ function movie_import_menu() {
     $items['import-movie'] = array(
         'title' => 'Import Movie',
         'page callback' => 'drupal_get_form',
-        'access arguments' => array('access content'),
+        'access arguments' => array('add movie review'),
         'type' => MENU_CALLBACK,
         'page arguments' => array('movie_import_form')
     );
@@ -27,6 +27,21 @@ function movie_import_menu() {
     );
     return $items;
 }
+
+/**
+ * Implements hook_permission().
+ */
+function movie_import_permission()
+{
+    return array(
+        'add movie review' => array(
+            'title' => t('Add a movie review'),
+            'description' => t('Perform add movies via my module.'),
+        ),
+    );
+}
+
+
 /**
  * Implements Form
  */
